@@ -1,0 +1,77 @@
+name: Test Cleanup Action
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  test-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Check disk space before
+        run: df -h
+
+      - name: Run Cleanup Action (Dry Run)
+        uses: ./
+        with:
+          dry-run: 'true'
+
+      - name: Run Cleanup Action
+        uses: ./
+        with:
+          remove-android: 'true'
+          remove-dotnet: 'true'
+          remove-haskell: 'true'
+          remove-swap: 'true'
+          remove-docker-images: 'true'
+          remove-codeql: 'true'
+          remove-browsers: 'true'
+
+      - name: Check disk space after
+        run: df -h
+
+  test-macos:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Check disk space before
+        run: df -h
+
+      - name: Run Cleanup Action
+        uses: ./
+        with:
+          remove-android: 'true'
+          remove-haskell: 'true'
+          remove-xcode: 'true' # Keeps active, deletes others
+          remove-browsers: 'true'
+
+      - name: Check disk space after
+        run: df -h
+
+  test-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Check disk space before
+        run: Get-PSDrive C | Select-Object Used,Free
+
+      - name: Run Cleanup Action
+        uses: ./
+        with:
+          remove-android: 'true'
+          remove-dotnet: 'true'
+          remove-haskell: 'true'
+          remove-docker-images: 'true'
+
+      - name: Check disk space after
+        run: Get-PSDrive C | Select-Object Used,Free

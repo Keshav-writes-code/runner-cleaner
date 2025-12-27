@@ -1,0 +1,84 @@
+name: 'Cross-Platform Runner Cleanup'
+description: 'Aggressively reclaim disk space on GitHub-hosted runners (Linux, macOS, Windows) by removing large, unnecessary SDKs and caches.'
+author: 'Jules'
+branding:
+  icon: 'trash-2'
+  color: 'red'
+
+inputs:
+  dry-run:
+    description: 'If true, only print what would be removed without actually deleting it.'
+    required: false
+    default: 'false'
+  remove-android:
+    description: 'Remove Android SDKs.'
+    required: false
+    default: 'true'
+  remove-dotnet:
+    description: 'Remove .NET SDKs.'
+    required: false
+    default: 'true'
+  remove-haskell:
+    description: 'Remove Haskell (GHC, Cabal, etc).'
+    required: false
+    default: 'true'
+  remove-codeql:
+    description: 'Remove CodeQL.'
+    required: false
+    default: 'true'
+  remove-docker-images:
+    description: 'Prune Docker images and builder cache.'
+    required: false
+    default: 'true'
+  remove-browsers:
+    description: 'Remove pre-installed browsers (Chrome, Firefox, Edge).'
+    required: false
+    default: 'true'
+  remove-xcode:
+    description: 'Remove unused Xcode versions (macOS only). Keeps the currently selected one.'
+    required: false
+    default: 'true'
+  remove-swap:
+    description: 'Disable and remove swap storage (Linux only).'
+    required: false
+    default: 'true'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Cleanup Linux
+      if: runner.os == 'Linux'
+      run: ${{ github.action_path }}/src/cleanup-linux.sh
+      shell: bash
+      env:
+        INPUT_DRY_RUN: ${{ inputs.dry-run }}
+        INPUT_REMOVE_ANDROID: ${{ inputs.remove-android }}
+        INPUT_REMOVE_DOTNET: ${{ inputs.remove-dotnet }}
+        INPUT_REMOVE_HASKELL: ${{ inputs.remove-haskell }}
+        INPUT_REMOVE_CODEQL: ${{ inputs.remove-codeql }}
+        INPUT_REMOVE_DOCKER_IMAGES: ${{ inputs.remove-docker-images }}
+        INPUT_REMOVE_BROWSERS: ${{ inputs.remove-browsers }}
+        INPUT_REMOVE_SWAP: ${{ inputs.remove-swap }}
+
+    - name: Cleanup macOS
+      if: runner.os == 'macOS'
+      run: ${{ github.action_path }}/src/cleanup-macos.sh
+      shell: bash
+      env:
+        INPUT_DRY_RUN: ${{ inputs.dry-run }}
+        INPUT_REMOVE_ANDROID: ${{ inputs.remove-android }}
+        INPUT_REMOVE_HASKELL: ${{ inputs.remove-haskell }}
+        INPUT_REMOVE_XCODE: ${{ inputs.remove-xcode }}
+        INPUT_REMOVE_BROWSERS: ${{ inputs.remove-browsers }}
+        INPUT_REMOVE_DOCKER_IMAGES: ${{ inputs.remove-docker-images }} # Just in case
+
+    - name: Cleanup Windows
+      if: runner.os == 'Windows'
+      run: ${{ github.action_path }}/src/cleanup-windows.ps1
+      shell: pwsh
+      env:
+        INPUT_DRY_RUN: ${{ inputs.dry-run }}
+        INPUT_REMOVE_ANDROID: ${{ inputs.remove-android }}
+        INPUT_REMOVE_DOTNET: ${{ inputs.remove-dotnet }}
+        INPUT_REMOVE_HASKELL: ${{ inputs.remove-haskell }}
+        INPUT_REMOVE_DOCKER_IMAGES: ${{ inputs.remove-docker-images }}
